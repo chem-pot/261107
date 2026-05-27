@@ -1,0 +1,1078 @@
+ 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공유결합 시뮬레이션</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #0a0a1a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a3e, #2d2d6b);
+            border-bottom: 2px solid #4444aa;
+        }
+
+        header h1 { font-size: 2rem; color: #88aaff; }
+        header p { color: #aaaacc; margin-top: 5px; }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+
+        .left-panel {
+            width: 280px;
+            background: #111128;
+            padding: 15px;
+            border-right: 2px solid #2a2a5a;
+            overflow-y: auto;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            color: #88aaff;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #2a2a5a;
+        }
+
+        .element-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .elem-btn {
+            padding: 6px 2px;
+            border: 1px solid #3a3a6a;
+            border-radius: 6px;
+            background: #1a1a3a;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.7rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .elem-btn:hover { background: #2a2a5a; border-color: #6666cc; }
+        .elem-btn.selected { background: #2a4a8a; border-color: #4488ff; color: #88aaff; }
+        .elem-btn.metal { opacity: 0.4; cursor: not-allowed; border-color: #aa4444; }
+
+        .elem-btn .symbol { font-size: 0.9rem; font-weight: bold; }
+        .elem-btn .number { font-size: 0.6rem; color: #888; }
+
+        .selected-list {
+            background: #0d0d22;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            min-height: 60px;
+        }
+
+        .selected-item {
+            display: inline-flex;
+            align-items: center;
+            background: #1a2a4a;
+            border: 1px solid #3366aa;
+            border-radius: 15px;
+            padding: 3px 10px;
+            margin: 3px;
+            font-size: 0.8rem;
+        }
+
+        .selected-item .remove {
+            margin-left: 6px;
+            cursor: pointer;
+            color: #ff6666;
+            font-weight: bold;
+        }
+
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-simulate {
+            background: linear-gradient(135deg, #2255cc, #3366ff);
+            color: white;
+        }
+        .btn-simulate:hover { background: linear-gradient(135deg, #3366dd, #4477ff); }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #662222, #993333);
+            color: white;
+        }
+        .btn-reset:hover { background: linear-gradient(135deg, #883333, #aa4444); }
+
+        .info-box {
+            background: #0d1a2a;
+            border: 1px solid #1a3a5a;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.78rem;
+            line-height: 1.6;
+            color: #aaccee;
+        }
+
+        .info-box h3 { color: #66aaff; margin-bottom: 5px; }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        canvas {
+            border-radius: 12px;
+            background: #050510;
+            border: 2px solid #2a2a5a;
+        }
+
+        .step-indicator {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .step {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background: #1a1a3a;
+            border: 1px solid #3a3a6a;
+            color: #666;
+            transition: all 0.4s;
+        }
+
+        .step.active {
+            background: #1a3a6a;
+            border-color: #4488ff;
+            color: #88ccff;
+        }
+
+        .step.done {
+            background: #1a4a2a;
+            border-color: #44aa66;
+            color: #88ffaa;
+        }
+
+        .control-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .ctrl-btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .ctrl-prev { background: #2a2a5a; color: #aaa; }
+        .ctrl-next { background: #1a4a8a; color: #88ccff; }
+        .ctrl-auto { background: #1a5a3a; color: #88ffaa; }
+        .ctrl-btn:hover { opacity: 0.8; }
+
+        .warning {
+            background: #3a1a1a;
+            border: 1px solid #aa3333;
+            color: #ff8888;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .result-box {
+            background: #0d2a1a;
+            border: 1px solid #1a5a3a;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.78rem;
+            color: #aaffcc;
+            display: none;
+        }
+
+        .result-box h3 { color: #44ff88; margin-bottom: 5px; }
+
+        .formula {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #88ffcc;
+            text-align: center;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>⚛️ 공유결합 시뮬레이션</h1>
+    <p>비금속 원소들이 전자쌍을 공유하여 결합하는 과정을 관찰하세요</p>
+</header>
+
+<div class="main-container">
+    <div class="left-panel">
+        <div class="panel-title">🔬 원소 선택 (비금속만 선택 가능)</div>
+        <div class="element-grid" id="elementGrid"></div>
+
+        <div class="panel-title">✅ 선택된 원소</div>
+        <div class="selected-list" id="selectedList">
+            <span style="color:#555; font-size:0.8rem;">원소를 클릭하여 추가하세요</span>
+        </div>
+
+        <div class="warning" id="warning"></div>
+
+        <div class="btn-group">
+            <button class="btn btn-simulate" onclick="startSimulation()">▶ 시뮬레이션</button>
+            <button class="btn btn-reset" onclick="resetAll()">↺ 초기화</button>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <h3>🔗 결합 결과</h3>
+            <div class="formula" id="resultFormula"></div>
+            <div id="resultDesc"></div>
+        </div>
+
+        <div class="info-box">
+            <h3>💡 공유결합이란?</h3>
+            두 비금속 원자가 서로의 <strong style="color:#ffcc44">원자가 전자</strong>를 공유하여
+            <strong style="color:#44ffaa">옥텟 규칙</strong>을 만족하는 결합입니다.
+            <br><br>
+            • 단일결합: 전자쌍 1개 공유<br>
+            • 이중결합: 전자쌍 2개 공유<br>
+            • 삼중결합: 전자쌍 3개 공유
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="step-indicator" id="stepIndicator">
+            <div class="step" id="step0">1. 원소 선택</div>
+            <div class="step" id="step1">2. 원자 구조 확인</div>
+            <div class="step" id="step2">3. 원자 접근</div>
+            <div class="step" id="step3">4. 전자 공유</div>
+            <div class="step" id="step4">5. 결합 완성</div>
+        </div>
+
+        <canvas id="simCanvas" width="700" height="480"></canvas>
+
+        <div class="control-bar">
+            <button class="ctrl-btn ctrl-prev" onclick="prevStep()">◀ 이전</button>
+            <button class="ctrl-btn ctrl-auto" onclick="toggleAuto()" id="autoBtn">⏵ 자동재생</button>
+            <button class="ctrl-btn ctrl-next" onclick="nextStep()">다음 ▶</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===================== 원소 데이터 =====================
+const ELEMENTS = [
+    { n:1,  sym:'H',  name:'수소',    shells:[1],       type:'nonmetal',  color:'#ffeeaa' },
+    { n:2,  sym:'He', name:'헬륨',    shells:[2],       type:'noble',     color:'#aaffee' },
+    { n:3,  sym:'Li', name:'리튬',    shells:[2,1],     type:'metal',     color:'#ffaaaa' },
+    { n:4,  sym:'Be', name:'베릴륨',  shells:[2,2],     type:'metal',     color:'#ffaaaa' },
+    { n:5,  sym:'B',  name:'붕소',    shells:[2,3],     type:'metalloid', color:'#ffddaa' },
+    { n:6,  sym:'C',  name:'탄소',    shells:[2,4],     type:'nonmetal',  color:'#aaaaff' },
+    { n:7,  sym:'N',  name:'질소',    shells:[2,5],     type:'nonmetal',  color:'#aaffaa' },
+    { n:8,  sym:'O',  name:'산소',    shells:[2,6],     type:'nonmetal',  color:'#ff8888' },
+    { n:9,  sym:'F',  name:'플루오린',shells:[2,7],     type:'nonmetal',  color:'#ffcc44' },
+    { n:10, sym:'Ne', name:'네온',    shells:[2,8],     type:'noble',     color:'#aaffee' },
+    { n:11, sym:'Na', name:'나트륨',  shells:[2,8,1],   type:'metal',     color:'#ffaaaa' },
+    { n:12, sym:'Mg', name:'마그네슘',shells:[2,8,2],   type:'metal',     color:'#ffaaaa' },
+    { n:13, sym:'Al', name:'알루미늄',shells:[2,8,3],   type:'metal',     color:'#ffaaaa' },
+    { n:14, sym:'Si', name:'규소',    shells:[2,8,4],   type:'metalloid', color:'#ffddaa' },
+    { n:15, sym:'P',  name:'인',      shells:[2,8,5],   type:'nonmetal',  color:'#ffaa44' },
+    { n:16, sym:'S',  name:'황',      shells:[2,8,6],   type:'nonmetal',  color:'#ffff44' },
+    { n:17, sym:'Cl', name:'염소',    shells:[2,8,7],   type:'nonmetal',  color:'#88ff88' },
+    { n:18, sym:'Ar', name:'아르곤',  shells:[2,8,8],   type:'noble',     color:'#aaffee' },
+    { n:19, sym:'K',  name:'칼륨',    shells:[2,8,8,1], type:'metal',     color:'#ffaaaa' },
+    { n:20, sym:'Ca', name:'칼슘',    shells:[2,8,8,2], type:'metal',     color:'#ffaaaa' },
+];
+
+// ===================== 전역 변수 =====================
+let selectedElements = [];
+let currentStep = -1;
+let animFrame = null;
+let autoPlay = false;
+let autoTimer = null;
+let animProgress = 0;
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+// ===================== 원소 버튼 생성 =====================
+function buildElementGrid() {
+    const grid = document.getElementById('elementGrid');
+    ELEMENTS.forEach(el => {
+        const btn = document.createElement('div');
+        btn.className = 'elem-btn' + (el.type === 'metal' || el.type === 'noble' ? ' metal' : '');
+        btn.id = 'ebtn-' + el.n;
+        btn.innerHTML = `
+            <div class="number">${el.n}</div>
+            <div class="symbol">${el.sym}</div>
+            <div class="number">${el.name}</div>
+        `;
+        if (el.type !== 'metal' && el.type !== 'noble') {
+            btn.onclick = () => selectElement(el);
+        }
+        grid.appendChild(btn);
+    });
+}
+
+// ===================== 원소 선택 (토글 기능 포함) =====================
+function selectElement(el) {
+    // 이미 선택된 원소인지 확인 → 토글(취소)
+    const existIndex = selectedElements.findIndex(e => e.n === el.n);
+    if (existIndex !== -1) {
+        selectedElements.splice(existIndex, 1);
+        document.getElementById('ebtn-' + el.n).classList.remove('selected');
+        hideWarning();
+        updateSelectedList();
+        return;
+    }
+
+    // 2개 초과 선택 방지
+    if (selectedElements.length >= 2) {
+        showWarning('현재 2개의 원소까지 선택 가능합니다. 초기화 후 다시 선택하세요.');
+        return;
+    }
+
+    selectedElements.push(el);
+    document.getElementById('ebtn-' + el.n).classList.add('selected');
+    hideWarning();
+    updateSelectedList();
+}
+
+function removeElement(idx) {
+    const el = selectedElements[idx];
+    selectedElements.splice(idx, 1);
+    document.getElementById('ebtn-' + el.n).classList.remove('selected');
+    updateSelectedList();
+}
+
+function updateSelectedList() {
+    const list = document.getElementById('selectedList');
+    if (selectedElements.length === 0) {
+        list.innerHTML = '<span style="color:#555; font-size:0.8rem;">원소를 클릭하여 추가하세요</span>';
+        return;
+    }
+    list.innerHTML = '';
+    selectedElements.forEach((el, i) => {
+        const item = document.createElement('div');
+        item.className = 'selected-item';
+        item.innerHTML = `${el.sym} (${el.name}) <span class="remove" onclick="removeElement(${i})">✕</span>`;
+        list.appendChild(item);
+    });
+}
+
+function showWarning(msg) {
+    const w = document.getElementById('warning');
+    w.textContent = msg;
+    w.style.display = 'block';
+}
+
+function hideWarning() {
+    document.getElementById('warning').style.display = 'none';
+}
+
+// ===================== 초기화 =====================
+function resetAll() {
+    selectedElements = [];
+    currentStep = -1;
+    animProgress = 0;
+    autoPlay = false;
+    clearTimeout(autoTimer);
+    cancelAnimationFrame(animFrame);
+    document.getElementById('autoBtn').textContent = '⏵ 자동재생';
+    ELEMENTS.forEach(el => {
+        const btn = document.getElementById('ebtn-' + el.n);
+        if (btn) btn.classList.remove('selected');
+    });
+    updateSelectedList();
+    updateStepIndicator(-1);
+    document.getElementById('resultBox').style.display = 'none';
+    hideWarning();
+    drawInitialScreen();
+}
+
+// ===================== 시뮬레이션 제어 =====================
+function startSimulation() {
+    if (selectedElements.length < 2) {
+        showWarning('2개의 원소를 선택해주세요!');
+        return;
+    }
+    hideWarning();
+    currentStep = 0;
+    animProgress = 0;
+    document.getElementById('resultBox').style.display = 'none';
+    renderStep();
+}
+
+function nextStep() {
+    if (currentStep < 0) return startSimulation();
+    if (currentStep < 4) {
+        currentStep++;
+        animProgress = 0;
+        cancelAnimationFrame(animFrame);
+        renderStep();
+    }
+}
+
+function prevStep() {
+    if (currentStep > 0) {
+        currentStep--;
+        animProgress = 0;
+        cancelAnimationFrame(animFrame);
+        renderStep();
+    }
+}
+
+function toggleAuto() {
+    autoPlay = !autoPlay;
+    document.getElementById('autoBtn').textContent = autoPlay ? '⏸ 일시정지' : '⏵ 자동재생';
+    if (autoPlay) runAuto();
+    else clearTimeout(autoTimer);
+}
+
+function runAuto() {
+    if (!autoPlay) return;
+    if (currentStep >= 4) {
+        autoPlay = false;
+        document.getElementById('autoBtn').textContent = '⏵ 자동재생';
+        return;
+    }
+    autoTimer = setTimeout(() => {
+        nextStep();
+        if (autoPlay) runAuto();
+    }, 2800);
+}
+
+// ===================== 단계 표시 =====================
+function updateStepIndicator(step) {
+    for (let i = 0; i < 5; i++) {
+        const el = document.getElementById('step' + i);
+        el.className = 'step';
+        if (i < step) el.classList.add('done');
+        else if (i === step) el.classList.add('active');
+    }
+}
+
+function renderStep() {
+    updateStepIndicator(currentStep);
+    cancelAnimationFrame(animFrame);
+    switch(currentStep) {
+        case 0: drawStep0(); break;
+        case 1: drawStep1(); break;
+        case 2: animateStep2(); break;
+        case 3: animateStep3(); break;
+        case 4: drawStep4(); showResult(); break;
+    }
+}
+
+// ===================== 비율 계산 =====================
+function getMoleculeRatio(a, b) {
+    const valA = a.shells[a.shells.length - 1];
+    const valB = b.shells[b.shells.length - 1];
+
+    // H(1번)는 최대 2개 → 필요 전자: 2 - valA
+    // 나머지 비금속 → 옥텟: 8 - valA
+    const needA = a.n === 1 ? (2 - valA) : (8 - valA);
+    const needB = b.n === 1 ? (2 - valB) : (8 - valB);
+
+    const lcmVal = lcm(needA, needB);
+    const countA = lcmVal / needA;
+    const countB = lcmVal / needB;
+
+    return { countA, countB, needA, needB };
+}
+
+function getFormula(a, b) {
+    const { countA, countB } = getMoleculeRatio(a, b);
+    let formula = '';
+    formula += a.sym;
+    if (countA > 1) formula += countA;
+    formula += b.sym;
+    if (countB > 1) formula += countB;
+    return formula;
+}
+
+function getBondType(n) {
+    if (n === 1) return '단일결합';
+    if (n === 2) return '이중결합';
+    if (n === 3) return '삼중결합';
+    return '결합';
+}
+
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+function lcm(a, b)  { return (a * b) / gcd(a, b); }
+
+// ===================== 결과 표시 =====================
+function showResult() {
+    const a = selectedElements[0];
+    const b = selectedElements[1];
+    const ratio = getMoleculeRatio(a, b);
+    const { countA, countB, needA, needB } = ratio;
+    const formula = getFormula(a, b);
+
+    document.getElementById('resultFormula').textContent = formula;
+    document.getElementById('resultDesc').innerHTML =
+        `• ${a.sym} ${countA}개: 각 ${needA}개 전자 공유 필요<br>
+         • ${b.sym} ${countB}개: 각 ${needB}개 전자 공유 필요<br>
+         • 결합 종류: <strong style="color:#44ff88">${getBondType(needA)}</strong><br>
+         • 총 공유 전자쌍: ${needA * countA}쌍`;
+    document.getElementById('resultBox').style.display = 'block';
+}
+
+// ===================== 초기 화면 =====================
+function drawInitialScreen() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGrid();
+    ctx.fillStyle = '#3a4a8a';
+    ctx.font = 'bold 22px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('원소를 선택하고 시뮬레이션을 시작하세요', canvas.width/2, canvas.height/2 - 20);
+    ctx.fillStyle = '#556688';
+    ctx.font = '16px Segoe UI';
+    ctx.fillText('비금속 원소 2개를 선택해주세요', canvas.width/2, canvas.height/2 + 20);
+}
+
+// ===================== 공통 그리기 함수 =====================
+function drawGrid() {
+    ctx.strokeStyle = 'rgba(40,50,100,0.4)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+}
+
+function drawAtom(cx, cy, element, scale=1, highlightValence=false) {
+    const shells = element.shells;
+    const radii = [30, 55, 80].map(r => r * scale);
+    const nucR = 18 * scale;
+
+    shells.forEach((count, si) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radii[si], 0, Math.PI * 2);
+        ctx.strokeStyle = si === shells.length-1 && highlightValence
+            ? '#ffdd44' : 'rgba(100,120,200,0.4)';
+        ctx.lineWidth = si === shells.length-1 && highlightValence ? 2 : 1;
+        ctx.setLineDash(si === shells.length-1 ? [] : [4,4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        for (let e = 0; e < count; e++) {
+            const angle = (e / count) * Math.PI * 2 - Math.PI / 2;
+            const ex = cx + radii[si] * Math.cos(angle);
+            const ey = cy + radii[si] * Math.sin(angle);
+            const isValence = si === shells.length - 1;
+
+            ctx.beginPath();
+            ctx.arc(ex, ey, 5 * scale, 0, Math.PI * 2);
+            if (isValence && highlightValence) {
+                ctx.fillStyle = '#ffdd44';
+                ctx.shadowColor = '#ffdd44';
+                ctx.shadowBlur = 10;
+            } else {
+                ctx.fillStyle = element.color;
+                ctx.shadowColor = element.color;
+                ctx.shadowBlur = 6;
+            }
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    });
+
+    const grad = ctx.createRadialGradient(cx-4*scale, cy-4*scale, 1, cx, cy, nucR);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.4, element.color);
+    grad.addColorStop(1, '#111');
+    ctx.beginPath();
+    ctx.arc(cx, cy, nucR, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.shadowColor = element.color;
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${14*scale}px Segoe UI`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(element.sym, cx, cy);
+}
+
+function drawAtomSimple(cx, cy, element, scale=1) {
+    const shells = element.shells;
+    const radii = [30, 55, 80].map(r => r * scale);
+    const nucR = 18 * scale;
+
+    shells.forEach((_, si) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radii[si], 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(100,120,200,0.35)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4,4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    });
+
+    const grad = ctx.createRadialGradient(cx-4*scale, cy-4*scale, 1, cx, cy, nucR);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.4, element.color);
+    grad.addColorStop(1, '#111');
+    ctx.beginPath();
+    ctx.arc(cx, cy, nucR, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.shadowColor = element.color;
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${14*scale}px Segoe UI`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(element.sym, cx, cy);
+}
+
+function drawAtomLabel(x, y, el) {
+    ctx.fillStyle = '#88aaff';
+    ctx.font = 'bold 14px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`${el.sym} (${el.name})`, x, y);
+    ctx.fillStyle = '#aaaacc';
+    ctx.font = '12px Segoe UI';
+    ctx.fillText(`원자번호: ${el.n}`, x, y + 18);
+}
+
+function drawValenceInfo(x, y, el) {
+    const valence = el.shells[el.shells.length - 1];
+    const shared  = el.n === 1 ? (2 - valence) : (8 - valence);
+    ctx.fillStyle = '#ffdd44';
+    ctx.font = 'bold 12px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`원자가전자: ${valence}개`, x, y);
+    ctx.fillStyle = '#44ffaa';
+    ctx.fillText(`공유 전자: ${shared}개`, x, y - 16);
+}
+
+function drawInfoBubble(x, y, text) {
+    const w = 440, h = 34;
+    ctx.fillStyle = 'rgba(20,40,80,0.88)';
+    ctx.strokeStyle = '#4488ff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(x - w/2, y - h/2, w, h, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#aaccff';
+    ctx.font = '13px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, y);
+}
+
+function drawBondLines(x1, y1, x2, y2, count) {
+    const dx = -(y2 - y1);
+    const dy =  (x2 - x1);
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const nx = dx / len;
+    const ny = dy / len;
+    const gap = 7;
+
+    for (let i = 0; i < count; i++) {
+        const offset = (i - (count-1)/2) * gap;
+        ctx.beginPath();
+        ctx.moveTo(x1 + nx*offset, y1 + ny*offset);
+        ctx.lineTo(x2 + nx*offset, y2 + ny*offset);
+        ctx.strokeStyle = '#44ffaa';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#44ffaa';
+        ctx.shadowBlur = 6;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+}
+
+function drawSharedElectrons(cx, cy, count, a, b) {
+    for (let i = 0; i < count; i++) {
+        const yOff = (i - (count-1)/2) * 14;
+        ctx.beginPath();
+        ctx.arc(cx-6, cy+yOff, 5, 0, Math.PI*2);
+        ctx.fillStyle = a.color;
+        ctx.shadowColor = a.color;
+        ctx.shadowBlur = 8;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(cx+6, cy+yOff, 5, 0, Math.PI*2);
+        ctx.fillStyle = b.color;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+}
+
+function scaleEase(t) {
+    return t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+}
+
+// ===================== Step 0: 원자 구조 확인 =====================
+function drawStep0() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGrid();
+
+    ctx.fillStyle = '#88aaff';
+    ctx.font = 'bold 18px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Step 1: 원자 구조 확인', canvas.width/2, 15);
+
+    const a = selectedElements[0];
+    const b = selectedElements[1];
+
+    drawAtom(canvas.width/4, canvas.height/2, a, 1, true);
+    drawAtom(3*canvas.width/4, canvas.height/2, b, 1, true);
+    drawAtomLabel(canvas.width/4,   canvas.height/2 + 110, a);
+    drawAtomLabel(3*canvas.width/4, canvas.height/2 + 110, b);
+    drawValenceInfo(canvas.width/4,   canvas.height/2 - 115, a);
+    drawValenceInfo(3*canvas.width/4, canvas.height/2 - 115, b);
+}
+
+// ===================== Step 1: 원자가전자 강조 =====================
+function drawStep1() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGrid();
+
+    ctx.fillStyle = '#88aaff';
+    ctx.font = 'bold 18px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Step 2: 원자가 전자 (노란색) 확인', canvas.width/2, 15);
+
+    const a = selectedElements[0];
+    const b = selectedElements[1];
+    const ratio = getMoleculeRatio(a, b);
+
+    drawAtom(canvas.width/4,   canvas.height/2, a, 1, true);
+    drawAtom(3*canvas.width/4, canvas.height/2, b, 1, true);
+    drawAtomLabel(canvas.width/4,   canvas.height/2 + 110, a);
+    drawAtomLabel(3*canvas.width/4, canvas.height/2 + 110, b);
+
+    drawInfoBubble(
+        canvas.width/2, canvas.height - 60,
+        `${a.sym}은 ${ratio.needA}개, ${b.sym}은 ${ratio.needB}개의 전자 필요 → ` +
+        `${a.sym}${ratio.countA > 1 ? ratio.countA : ''}${b.sym}${ratio.countB > 1 ? ratio.countB : ''} 분자 형성`
+    );
+}
+
+// ===================== Step 2: 원자 접근 애니메이션 =====================
+function animateStep2() {
+    animProgress = 0;
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGrid();
+
+        ctx.fillStyle = '#88aaff';
+        ctx.font = 'bold 18px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Step 3: 원자가 서로 접근', canvas.width/2, 15);
+
+        const t  = animProgress;
+        const a  = selectedElements[0];
+        const b  = selectedElements[1];
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+
+        const startDist = 280;
+        const endDist   = 150;
+        const dist = startDist - (startDist - endDist) * t;
+
+        drawAtom(cx - dist/2, cy, a, 0.9, false);
+        drawAtom(cx + dist/2, cy, b, 0.9, false);
+        drawAtomLabel(cx - dist/2, cy + 100, a);
+        drawAtomLabel(cx + dist/2, cy + 100, b);
+
+        // 거리 표시 선
+        ctx.strokeStyle = 'rgba(255,200,100,0.5)';
+        ctx.setLineDash([5,5]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - dist/2 + 20, cy - 20);
+        ctx.lineTo(cx + dist/2 - 20, cy - 20);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#ffcc66';
+        ctx.font = '12px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText(`← ${Math.round(dist)}px →`, cx, cy - 35);
+
+        animProgress += 0.008;
+        if (animProgress < 1) {
+            animFrame = requestAnimationFrame(animate);
+        } else {
+            drawInfoBubble(canvas.width/2, canvas.height - 60,
+                '원자들이 서로 인력을 느끼며 가까워집니다');
+        }
+    }
+    animate();
+}
+
+// ===================== Step 3: 전자 공유 애니메이션 =====================
+function animateStep3() {
+    animProgress = 0;
+
+    const a = selectedElements[0];
+    const b = selectedElements[1];
+    const { needA, needB } = getMoleculeRatio(a, b);
+    const bondCount = needA;
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGrid();
+
+        ctx.fillStyle = '#88aaff';
+        ctx.font = 'bold 18px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Step 4: 전자쌍 공유 중...', canvas.width/2, 15);
+
+        const t    = animProgress;
+        const cx   = canvas.width / 2;
+        const cy   = canvas.height / 2;
+        const dist = 150;
+
+        drawAtomSimple(cx - dist/2, cy, a, 0.9);
+        drawAtomSimple(cx + dist/2, cy, b, 0.9);
+
+        // 공유 전자 이동
+        for (let i = 0; i < bondCount; i++) {
+            const yOff = (i - (bondCount-1)/2) * 16;
+
+            const exA = (cx - dist/2) + 80 * scaleEase(t);
+            ctx.beginPath();
+            ctx.arc(exA - 6, cy + yOff, 5, 0, Math.PI*2);
+            ctx.fillStyle = a.color;
+            ctx.shadowColor = a.color;
+            ctx.shadowBlur = 8;
+            ctx.fill();
+
+            const exB = (cx + dist/2) - 80 * scaleEase(t);
+            ctx.beginPath();
+            ctx.arc(exB + 6, cy + yOff, 5, 0, Math.PI*2);
+            ctx.fillStyle = b.color;
+            ctx.shadowColor = b.color;
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // 공유 영역 페이드인
+        if (t > 0.5) {
+            const alpha = (t - 0.5) * 2;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, 35, 50, 0, 0, Math.PI*2);
+            ctx.fillStyle = `rgba(100,200,255,${alpha * 0.15})`;
+            ctx.strokeStyle = `rgba(100,200,255,${alpha * 0.6})`;
+            ctx.lineWidth = 1.5;
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = `rgba(100,255,200,${alpha})`;
+            ctx.font = 'bold 11px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('공유 전자쌍', cx, cy - 60);
+        }
+
+        drawAtomLabel(cx - dist/2, cy + 100, a);
+        drawAtomLabel(cx + dist/2, cy + 100, b);
+
+        animProgress += 0.006;
+        if (animProgress < 1) {
+            animFrame = requestAnimationFrame(animate);
+        } else {
+            drawInfoBubble(canvas.width/2, canvas.height - 60,
+                `${bondCount}쌍의 전자를 공유하여 ${getBondType(bondCount)}을 형성합니다`);
+        }
+    }
+    animate();
+}
+
+// ===================== Step 4: 결합 완성 (원소 개수 자동 반영) =====================
+function drawStep4() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGrid();
+
+    ctx.fillStyle = '#44ffaa';
+    ctx.font = 'bold 20px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('✅ Step 5: 공유결합 완성!', canvas.width/2, 15);
+
+    const a = selectedElements[0];
+    const b = selectedElements[1];
+    const { countA, countB, needA, needB } = getMoleculeRatio(a, b);
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    // ── A 1개 + B 1개 (예: HF, HCl, F₂) ──
+    if (countA === 1 && countB === 1) {
+        const dist = 140;
+        drawAtom(cx - dist/2, cy, a, 0.9, false);
+        drawAtom(cx + dist/2, cy, b, 0.9, false);
+        drawBondLines(cx - dist/2 + 20, cy, cx + dist/2 - 20, cy, needA);
+        drawSharedElectrons(cx, cy, needA, a, b);
+        drawAtomLabel(cx - dist/2, cy + 110, a);
+        drawAtomLabel(cx + dist/2, cy + 110, b);
+
+    // ── A 2개 + B 1개 (예: H₂O, H₂S) ──
+    } else if (countA === 2 && countB === 1) {
+        const dist  = 130;
+        const angL  = (210 * Math.PI) / 180;
+        const angR  = (330 * Math.PI) / 180;
+        const axL   = cx + dist * Math.cos(angL);
+        const ayL   = cy + dist * Math.sin(angL);
+        const axR   = cx + dist * Math.cos(angR);
+        const ayR   = cy + dist * Math.sin(angR);
+
+        drawAtom(cx,  cy,  b, 1,   false);
+        drawAtom(axL, ayL, a, 0.8, false);
+        drawAtom(axR, ayR, a, 0.8, false);
+
+        drawBondLines(
+            cx  + 20 * Math.cos(angL), cy  + 20 * Math.sin(angL),
+            axL - 18 * Math.cos(angL), ayL - 18 * Math.sin(angL), needB
+        );
+        drawBondLines(
+            cx  + 20 * Math.cos(angR), cy  + 20 * Math.sin(angR),
+            axR - 18 * Math.cos(angR), ayR - 18 * Math.sin(angR), needB
+        );
+
+        drawAtomLabel(cx,  cy  + 115, b);
+        drawAtomLabel(axL, ayL + 90,  a);
+        drawAtomLabel(axR, ayR + 90,  a);
+
+    // ── A 1개 + B 2개 (예: CO₂, SO₂) ──
+    } else if (countA === 1 && countB === 2) {
+        const dist = 140;
+        drawAtom(cx - dist, cy, b, 0.9, false);
+        drawAtom(cx,        cy, a, 1,   false);
+        drawAtom(cx + dist, cy, b, 0.9, false);
+
+        drawBondLines(cx - dist + 18, cy, cx - 20, cy, needA);
+        drawBondLines(cx + 20,        cy, cx + dist - 18, cy, needA);
+
+        drawAtomLabel(cx - dist, cy + 110, b);
+        drawAtomLabel(cx,        cy + 115, a);
+        drawAtomLabel(cx + dist, cy + 110, b);
+
+    // ── A 3개 + B 1개 (예: NH₃, PH₃) ──
+    } else if (countA === 3 && countB === 1) {
+        const dist   = 130;
+        const angles = [270, 30, 150].map(d => d * Math.PI / 180);
+
+        drawAtom(cx, cy, b, 1, false);
+        drawAtomLabel(cx, cy + 115, b);
+
+        angles.forEach(ang => {
+            const ax = cx + dist * Math.cos(ang);
+            const ay = cy + dist * Math.sin(ang);
+            drawAtom(ax, ay, a, 0.75, false);
+            drawAtomLabel(ax, ay + 85, a);
+            drawBondLines(
+                cx + 20 * Math.cos(ang), cy + 20 * Math.sin(ang),
+                ax - 15 * Math.cos(ang), ay - 15 * Math.sin(ang),
+                needB
+            );
+        });
+
+    // ── A 4개 + B 1개 (예: CH₄, SiH₄) ──
+    } else if (countA === 4 && countB === 1) {
+        const dist   = 130;
+        const angles = [270, 0, 90, 180].map(d => d * Math.PI / 180);
+
+        drawAtom(cx, cy, b, 1, false);
+        drawAtomLabel(cx, cy + 115, b);
+
+        angles.forEach(ang => {
+            const ax = cx + dist * Math.cos(ang);
+            const ay = cy + dist * Math.sin(ang);
+            drawAtom(ax, ay, a, 0.75, false);
+            drawAtomLabel(ax, ay + 85, a);
+            drawBondLines(
+                cx + 20 * Math.cos(ang), cy + 20 * Math.sin(ang),
+                ax - 15 * Math.cos(ang), ay - 15 * Math.sin(ang),
+                needB
+            );
+        });
+
+    // ── 기타 비율 (일렬 배치) ──
+    } else {
+        const dist = 150;
+        drawAtom(cx - dist/2, cy, a, 0.9, false);
+        drawAtom(cx + dist/2, cy, b, 0.9, false);
+        drawBondLines(cx - dist/2 + 20, cy, cx + dist/2 - 20, cy, needA);
+        drawAtomLabel(cx - dist/2, cy + 110, a);
+        drawAtomLabel(cx + dist/2, cy + 110, b);
+    }
+
+    // 화학식 표시
+    ctx.fillStyle = '#44ffaa';
+    ctx.font = 'bold 24px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(getFormula(a, b), cx, 52);
+
+    drawInfoBubble(
+        canvas.width/2, canvas.height - 60,
+        '전자쌍을 공유하여 안정한 공유결합 분자가 형성되었습니다!'
+    );
+}
+
+// ===================== 시작 =====================
+buildElementGrid();
+drawInitialScreen();
+</script>
+</body>
+</html>
